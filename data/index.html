@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      document.getElementById("clock").textContent = timeString;
+    }
+
+    function updateLedButton() {
+      fetch("/led/state")
+        .then(res => res.text())
+        .then(state => {
+          const btn = document.getElementById("ledBtn");
+          btn.textContent = (state === "on") ? "Turn OFF" : "Turn ON";
+          btn.setAttribute("data-state", state);
+        });
+    }
+
+    setInterval(() => {
+      // updateLedButton();
+      updateTime();
+    }, 1000);
+
+    window.onload = () => {
+      updateTime();
+      updateLedButton();
+    };
+
+    function toggleLed(){
+      const btn = document.getElementById("ledBtn");
+      const currentState = btn.getAttribute("data-state"); // "on" or "off"
+      const newState = (currentState === "off") ? "on" : "off";
+
+      fetch("/led/" + newState)
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        btn.textContent = (newState === "on") ? "Turn OFF" : "Turn ON";
+        btn.setAttribute("data-state", newState);
+      });
+    }
+
+    function setSchedule(event, type){
+      event.preventDefault();
+      const h = document.getElementById(`${type}_hour`).value;
+      const m = document.getElementById(`${type}_minute`).value;
+      const s = document.getElementById(`${type}_second`).value;
+      const query = `/set_schedule?h=${h}&m=${m}&s=${s}&type=${type}`;
+
+      fetch(query)
+        .then(res => res.text())
+        .then(msg => alert(msg));
+    }
+  </script>
+</head>
+<body>
+  <h1>ESP32 Web Server</h1>
+  <p>Current time: <strong id="clock">--:--:--</strong></p>
+
+  <!-- Nút bật/tắt -->
+  <button id="ledBtn" data-state="%STATE%" onclick="toggleLed()">%BTN_TEXT%</button>
+
+  <h2>Schedule Turn ON LED</h2>
+  <form onsubmit="setSchedule(event, 'on')">
+    <label>Hour:</label>
+    <input type="number" id="on_hour" min="0" max="23" required>
+    <label>Minute:</label>
+    <input type="number" id="on_minute" min="0" max="59" required>
+    <label>Second:</label>
+    <input type="number" id="on_second" min="0" max="59" required>
+    <button type="submit">Set Turn ON Time</button>
+  </form>
+
+  <h2>Schedule Turn OFF LED</h2>
+  <form onsubmit="setSchedule(event, 'off')">
+    <label>Hour:</label>
+    <input type="number" id="off_hour" min="0" max="23" required>
+    <label>Minute:</label>
+    <input type="number" id="off_minute" min="0" max="59" required>
+    <label>Second:</label>
+    <input type="number" id="off_second" min="0" max="59" required>
+    <button type="submit">Set Turn OFF Time</button>
+  </form>
+</body>
+</html>
