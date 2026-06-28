@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WiFi Configuration</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #6ec1e4, #d4f0f0);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    p {
+      color: #555;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #0078d7;
+      outline: none;
+      box-shadow: 0 0 4px rgba(0, 120, 215, 0.3);
+    }
+
+    button {
+      background-color: #0078d7;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 0.8rem;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>🌐 WiFi Setup</h2>
+    <p>Enter your WiFi credentials below to connect this device.</p>
+
+    <form id="wifiForm">
+      <input type="text" name="ssid" id="ssid" placeholder="WiFi SSID" required />
+      <input type="password" name="password" id="password" placeholder="WiFi Password" />
+      <button type="submit">Connect</button>
+    </form>
+
+    <div class="status" id="statusMsg"></div>
+
+    <div class="footer">
+      ESP32 IoT Configuration Portal
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("wifiForm");
+    const statusMsg = document.getElementById("statusMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const ssid = document.getElementById("ssid").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!ssid) {
+        statusMsg.textContent = "⚠️ Please enter your WiFi SSID.";
+        statusMsg.style.color = "red";
+        return;
+      }
+
+      statusMsg.textContent = "⏳ Sending credentials...";
+      statusMsg.style.color = "#333";
+
+      try {
+        const res = await fetch("/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`
+        });
+
+        const text = await res.text();
+        statusMsg.textContent = text.includes("Connecting")
+          ? "✅ Credentials sent successfully! The device will reboot shortly."
+          : "❌ Failed to send credentials.";
+        statusMsg.style.color = text.includes("Connecting") ? "green" : "red";
+      } catch (err) {
+        statusMsg.textContent = "❌ Error: Cannot reach device.";
+        statusMsg.style.color = "red";
+      }
+    });
+  </script>
+</body>
+
+</html>
